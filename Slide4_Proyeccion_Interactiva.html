@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proyección Año 1 — Chevrolet Urban Lab Querétaro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1B2A4A;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #D3D1C7;
+    min-height: 100vh;
+    padding: 32px 40px 24px;
+  }
+  .top-bar { height: 5px; background: #2E4DA3; margin: -32px -40px 28px; }
+  .title { font-size: 26px; font-weight: 700; color: #FFFFFF; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: #C8A951; font-style: italic; margin-bottom: 24px; }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+    max-width: 560px;
+  }
+  .metric {
+    background: #243352;
+    border: 0.8px solid #C8A951;
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .metric-val { font-size: 22px; font-weight: 700; color: #C8A951; }
+  .metric-lbl { font-size: 10px; color: #B0BAD0; margin-top: 4px; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    margin-bottom: 14px; font-size: 12px; color: #B0BAD0;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .leg-sq { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+  .leg-dash {
+    width: 22px; height: 2px; flex-shrink: 0;
+    border-top: 2px dashed #378ADD;
+  }
+  .leg-circle {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid #C8A951; background: #1B2A4A; flex-shrink: 0;
+  }
+  .chart-wrap { position: relative; width: 100%; height: 400px; }
+  .note {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #243352; border: 0.8px solid #1D9E75;
+    border-radius: 8px; padding: 8px 14px;
+    font-size: 12px; color: #9FE1CB; margin-bottom: 16px;
+  }
+  .note-dot { width: 8px; height: 8px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
+  .footer {
+    margin-top: 16px; padding-top: 12px;
+    border-top: 0.5px solid #2E4DA3;
+    font-size: 10px; color: #5F5E5A; text-align: center;
+  }
+  .bottom-bar { height: 4px; background: #C8A951; margin: 20px -40px -24px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<div class="title">Proyección año 1 — El modelo funciona</div>
+<div class="subtitle">Chevrolet Urban Lab Querétaro &nbsp;·&nbsp; Costos realistas mercado Querétaro 2025</div>
+
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-val">402 autos</div>
+    <div class="metric-lbl">Unidades vendidas año 1</div>
+  </div>
+  <div class="metric">
+    <div class="metric-val">$211.9M</div>
+    <div class="metric-lbl">Ingresos totales</div>
+  </div>
+  <div class="metric">
+    <div class="metric-val">+$12.1M</div>
+    <div class="metric-lbl">Resultado acumulado</div>
+  </div>
+</div>
+
+<div class="note">
+  <div class="note-dot"></div>
+  Mes 6 (Jun): punto de equilibrio alcanzado — operación rentable sostenida
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="leg-sq" style="background:#2E4DA3"></div> Venta de autos</div>
+  <div class="legend-item"><div class="leg-sq" style="background:#1D9E75"></div> Postventa (Ref + Serv + F&amp;I)</div>
+  <div class="legend-item"><div class="leg-dash"></div> Costos fijos $1,216,000/mes</div>
+  <div class="legend-item"><div class="leg-circle"></div> Resultado operativo</div>
+</div>
+
+<div class="chart-wrap">
+  <canvas id="chart"></canvas>
+</div>
+
+<div class="footer">
+  Rampa: 15 unidades mes 1 → 45 unidades mes 12 &nbsp;·&nbsp;
+  Margen por auto: $36,800 &nbsp;·&nbsp;
+  Costos fijos: $1,216,000/mes &nbsp;·&nbsp;
+  Modelo financiero completo: Urban_Lab_Realista_Qro2025.xlsx
+</div>
+
+<div class="bottom-bar"></div>
+
+<script>
+const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const unidades = [15,20,25,30,32,35,35,38,40,42,45,45];
+const P=460000, CF=1216000, CV=0.92;
+const MGR=0.262, MGS=0.610, MGF=0.717;
+const RM=1633500, SM=883759, FM=285890, OM=120000;
+
+const ingAutos=[], ingPostv=[], resultado=[];
+unidades.forEach(u => {
+  const fac = Math.max(0.40, Math.min(1.0, 0.40 + (u-15)/30*0.60));
+  const ia = u * P;
+  const ir=Math.round(RM*fac), is_=Math.round(SM*fac),
+        ifi=Math.round(FM*fac), io=Math.round(OM*fac);
+  const cv = Math.round(ia*CV)+Math.round(ir*(1-MGR))+Math.round(is_*(1-MGS))+Math.round(ifi*(1-MGF));
+  const mb = (ia+ir+is_+ifi+io) - cv;
+  ingAutos.push(ia);
+  ingPostv.push(ir+is_+ifi+io);
+  resultado.push(mb - CF);
+});
+
+new Chart(document.getElementById('chart'), {
+  type: 'bar',
+  data: {
+    labels: meses,
+    datasets: [
+      {
+        label: 'Venta de autos',
+        data: ingAutos,
+        backgroundColor: '#2E4DA3',
+        stack: 'ing',
+        yAxisID: 'y',
+        borderRadius: 3,
+        borderSkipped: false
+      },
+      {
+        label: 'Postventa',
+        data: ingPostv,
+        backgroundColor: '#1D9E75',
+        stack: 'ing',
+        yAxisID: 'y',
+        borderRadius: 3,
+        borderSkipped: 'bottom'
+      },
+      {
+        label: 'Costos fijos',
+        data: Array(12).fill(CF),
+        type: 'line',
+        borderColor: '#378ADD',
+        borderWidth: 1.8,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        yAxisID: 'y',
+        fill: false,
+        stack: undefined
+      },
+      {
+        label: 'Resultado operativo',
+        data: resultado,
+        type: 'line',
+        borderColor: '#C8A951',
+        borderWidth: 2.5,
+        pointRadius: 6,
+        pointBackgroundColor: resultado.map(r => r >= 0 ? '#C8A951' : '#E24B4A'),
+        pointBorderColor: '#1B2A4A',
+        pointBorderWidth: 2,
+        pointHoverRadius: 8,
+        yAxisID: 'y2',
+        fill: false,
+        stack: undefined,
+        tension: 0.15
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#243352',
+        borderColor: '#2E4DA3',
+        borderWidth: 1,
+        titleColor: '#FFFFFF',
+        bodyColor: '#D3D1C7',
+        padding: 12,
+        callbacks: {
+          label: ctx => {
+            const v = ctx.parsed.y;
+            const abs = Math.abs(v);
+            const fmt = abs >= 1000000
+              ? `$${(abs/1000000).toFixed(2)}M`
+              : `$${Math.round(abs/1000)}k`;
+            const sign = v < 0 ? '-' : (ctx.dataset.label === 'Resultado operativo' ? '+' : '');
+            return ` ${ctx.dataset.label}: ${sign}${fmt}`;
+          },
+          title: ctx => `${ctx[0].label} · ${unidades[ctx[0].dataIndex]} unidades`
+        }
+      }
+    },
+    scales: {
+      x: {
+        stacked: true,
+        ticks: { color: '#B0BAD0', font: { size: 12 } },
+        grid: { color: 'rgba(46,77,163,0.3)' }
+      },
+      y: {
+        stacked: true,
+        position: 'left',
+        title: { display: true, text: 'Ingresos (MXN)', color: '#888780', font: { size: 11 } },
+        ticks: {
+          color: '#B0BAD0', font: { size: 10 },
+          callback: v => v >= 1000000 ? '$' + (v/1000000).toFixed(0) + 'M' : '$' + (v/1000) + 'k'
+        },
+        grid: { color: 'rgba(46,77,163,0.2)' },
+        min: 0, max: 30000000
+      },
+      y2: {
+        position: 'right',
+        title: { display: true, text: 'Resultado operativo', color: '#C8A951', font: { size: 11 } },
+        ticks: {
+          color: '#C8A951', font: { size: 10 },
+          callback: v => (v >= 0 ? '+' : '') + '$' + (v/1000000).toFixed(1) + 'M'
+        },
+        grid: { display: false },
+        min: -3500000, max: 7500000
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>

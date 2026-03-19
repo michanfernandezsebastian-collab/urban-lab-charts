@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Punto de Equilibrio — Chevrolet Urban Lab Querétaro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1B2A4A;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #D3D1C7;
+    min-height: 100vh;
+    padding: 32px 40px 24px;
+  }
+  .top-bar { height: 5px; background: #2E4DA3; margin: -32px -40px 28px; }
+  .title { font-size: 26px; font-weight: 700; color: #FFFFFF; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: #C8A951; font-style: italic; margin-bottom: 24px; }
+
+  .top-row { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; }
+
+  .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex: 0 0 auto; }
+  .metric {
+    background: #243352;
+    border: 0.8px solid #2E4DA3;
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 160px;
+  }
+  .metric.highlight { border-color: #C8A951; }
+  .metric-lbl { font-size: 10px; color: #B0BAD0; margin-bottom: 5px; }
+  .metric-val { font-size: 20px; font-weight: 700; color: #D3D1C7; }
+  .metric.highlight .metric-val { color: #C8A951; }
+
+  .escenarios { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 220px; }
+  .escenario {
+    background: #243352;
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 12px;
+    border: 0.8px solid #2E4DA3;
+  }
+  .esc-badge {
+    font-size: 18px; font-weight: 700; min-width: 44px;
+    text-align: center;
+  }
+  .esc-info { flex: 1; }
+  .esc-label { font-size: 11px; color: #888780; }
+  .esc-val { font-size: 13px; font-weight: 500; color: #D3D1C7; }
+
+  .formula {
+    background: #243352;
+    border: 0.8px solid #C8A951;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 13px;
+    text-align: center;
+    color: #B0BAD0;
+    margin-bottom: 16px;
+  }
+  .formula span { color: #C8A951; font-weight: 700; font-size: 15px; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    margin-bottom: 12px; font-size: 12px; color: #B0BAD0;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .leg-line { width: 24px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+  .leg-dash-blue { width: 24px; flex-shrink: 0; border-top: 2px dashed #378ADD; }
+  .leg-dash-amber { width: 24px; flex-shrink: 0; border-top: 2px dotted #BA7517; }
+
+  .zones { display: flex; gap: 6px; margin-bottom: 10px; font-size: 11px; }
+  .zone {
+    padding: 4px 12px; border-radius: 20px; font-weight: 500;
+  }
+  .zone-loss { background: rgba(194,61,61,0.15); color: #F09595; border: 0.5px solid #A32D2D; }
+  .zone-gain { background: rgba(26,122,74,0.15); color: #9FE1CB; border: 0.5px solid #1A7A4A; }
+
+  .chart-wrap { position: relative; width: 100%; height: 400px; }
+
+  .footer {
+    margin-top: 16px; padding-top: 12px;
+    border-top: 0.5px solid #2E4DA3;
+    font-size: 10px; color: #5F5E5A; text-align: center;
+  }
+  .bottom-bar { height: 4px; background: #C8A951; margin: 20px -40px -24px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<div class="title">Punto de equilibrio — Urban Lab Querétaro</div>
+<div class="subtitle">Chevrolet Urban Lab Querétaro &nbsp;·&nbsp; Costos realistas mercado Querétaro 2025</div>
+
+<div class="formula">
+  Costos fijos &nbsp;÷&nbsp; Margen por auto &nbsp;=&nbsp; PE &nbsp;&nbsp;
+  <span>$1,216,000 ÷ $36,800 = 33 autos / mes</span>
+</div>
+
+<div class="top-row">
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-lbl">Costos fijos / mes</div>
+      <div class="metric-val">$1,216,000</div>
+    </div>
+    <div class="metric">
+      <div class="metric-lbl">Precio por auto</div>
+      <div class="metric-val">$460,000</div>
+    </div>
+    <div class="metric">
+      <div class="metric-lbl">Costo variable / auto</div>
+      <div class="metric-val">$423,200</div>
+    </div>
+    <div class="metric highlight">
+      <div class="metric-lbl">Margen bruto / auto (8%)</div>
+      <div class="metric-val">$36,800</div>
+    </div>
+  </div>
+
+  <div class="escenarios">
+    <div class="escenario" style="border-color:#888780">
+      <div class="esc-badge" style="color:#B4B2A9">33</div>
+      <div class="esc-info">
+        <div class="esc-label">Escenario conservador — sin postventa</div>
+        <div class="esc-val">Solo autos cubren costos fijos</div>
+      </div>
+    </div>
+    <div class="escenario" style="border-color:#C8A951">
+      <div class="esc-badge" style="color:#C8A951">22</div>
+      <div class="esc-info">
+        <div class="esc-label">Escenario base — con 35% margen postventa</div>
+        <div class="esc-val">Se alcanza en mes 6 (junio)</div>
+      </div>
+    </div>
+    <div class="escenario" style="border-color:#1D9E75">
+      <div class="esc-badge" style="color:#1D9E75">45</div>
+      <div class="esc-info">
+        <div class="esc-label">Meta mes 12 — operación plena</div>
+        <div class="esc-val">Ingreso total $20.7M / mes</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="zones">
+  <div class="zone zone-loss">Zona de pérdida (izquierda del PE)</div>
+  <div class="zone zone-gain">Zona de ganancia (derecha del PE)</div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="leg-line" style="background:#1D9E75"></div> Revenue</div>
+  <div class="legend-item"><div class="leg-line" style="background:#D85A30"></div> Costos totales</div>
+  <div class="legend-item"><div class="leg-dash-blue"></div> Costos fijos</div>
+  <div class="legend-item"><div class="leg-dash-amber"></div> Costo variable</div>
+</div>
+
+<div class="chart-wrap">
+  <canvas id="beChart"></canvas>
+</div>
+
+<div class="footer">
+  Costos fijos: $1,216,000/mes &nbsp;·&nbsp; Precio: $460,000/auto &nbsp;·&nbsp;
+  Costo variable: $423,200/auto (92%) &nbsp;·&nbsp; Margen por auto: $36,800 &nbsp;·&nbsp;
+  Modelo financiero completo: Urban_Lab_Realista_Qro2025.xlsx
+</div>
+
+<div class="bottom-bar"></div>
+
+<script>
+const CF = 1216000;
+const P  = 460000;
+const CV = 423200;
+const PE = CF / (P - CV); // ~33
+
+const labels = [];
+const revenue = [], totalCost = [], fixedCost = [], varCost = [];
+
+for (let u = 0; u <= 60; u += 2) {
+  labels.push(u);
+  revenue.push(Math.round(u * P));
+  totalCost.push(Math.round(CF + u * CV));
+  fixedCost.push(CF);
+  varCost.push(Math.round(u * CV));
+}
+
+new Chart(document.getElementById('beChart'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'Revenue',
+        data: revenue,
+        borderColor: '#1D9E75',
+        backgroundColor: 'rgba(29,158,117,0.07)',
+        borderWidth: 2.8,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        tension: 0,
+        fill: false
+      },
+      {
+        label: 'Costos totales',
+        data: totalCost,
+        borderColor: '#D85A30',
+        backgroundColor: 'rgba(216,90,48,0.07)',
+        borderWidth: 2.8,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        tension: 0,
+        fill: false
+      },
+      {
+        label: 'Costos fijos',
+        data: fixedCost,
+        borderColor: '#378ADD',
+        borderWidth: 1.8,
+        borderDash: [7, 4],
+        pointRadius: 0,
+        tension: 0,
+        fill: false
+      },
+      {
+        label: 'Costo variable',
+        data: varCost,
+        borderColor: '#BA7517',
+        borderWidth: 1.8,
+        borderDash: [3, 3],
+        pointRadius: 0,
+        tension: 0,
+        fill: false
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#243352',
+        borderColor: '#2E4DA3',
+        borderWidth: 1,
+        titleColor: '#FFFFFF',
+        bodyColor: '#D3D1C7',
+        padding: 12,
+        callbacks: {
+          title: ctx => `${ctx[0].label} autos / mes`,
+          label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString('es-MX')}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Unidades vendidas por mes',
+          color: '#888780',
+          font: { size: 11 }
+        },
+        ticks: {
+          color: '#B0BAD0',
+          font: { size: 11 },
+          callback: (_, i) => labels[i]
+        },
+        grid: { color: 'rgba(46,77,163,0.2)' }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'MXN',
+          color: '#888780',
+          font: { size: 11 }
+        },
+        ticks: {
+          color: '#B0BAD0',
+          font: { size: 10 },
+          callback: v => v >= 1000000
+            ? '$' + (v/1000000).toFixed(1) + 'M'
+            : '$' + (v/1000) + 'k'
+        },
+        grid: { color: 'rgba(46,77,163,0.2)' },
+        min: 0
+      }
+    }
+  },
+  plugins: [{
+    id: 'peMarker',
+    afterDraw(chart) {
+      const ctx = chart.ctx;
+      const xScale = chart.scales.x;
+      const yScale = chart.scales.y;
+
+      // PE index in our labels array (step=2, so PE=33 → index 16.5)
+      const peIdx = PE / 2;
+      const xPx = xScale.getPixelForValue(peIdx);
+      const peRevenue = Math.round(PE * P);
+      const yPx = yScale.getPixelForValue(peRevenue);
+
+      // Vertical + horizontal dashed guides
+      ctx.save();
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = 'rgba(200,169,81,0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(xPx, yScale.top);
+      ctx.lineTo(xPx, yPx);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(xScale.left, yPx);
+      ctx.lineTo(xPx, yPx);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // PE dot
+      ctx.beginPath();
+      ctx.arc(xPx, yPx, 9, 0, Math.PI * 2);
+      ctx.fillStyle = '#1B2A4A';
+      ctx.fill();
+      ctx.strokeStyle = '#C8A951';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(xPx, yPx, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#C8A951';
+      ctx.fill();
+
+      // PE label bubble
+      const label = 'PE: 33 autos · $15.2M';
+      ctx.font = '600 12px -apple-system, sans-serif';
+      const tw = ctx.measureText(label).width;
+      const bx = xPx + 14;
+      const by = yPx - 22;
+      const bw = tw + 18; const bh = 24;
+      ctx.fillStyle = 'rgba(27,42,74,0.95)';
+      ctx.strokeStyle = '#C8A951';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.roundRect(bx, by - bh + 6, bw, bh, 5);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#C8A951';
+      ctx.fillText(label, bx + 9, by - 2);
+
+      // Loss / Gain zone labels
+      ctx.font = '500 11px -apple-system, sans-serif';
+      ctx.fillStyle = 'rgba(240,149,149,0.8)';
+      ctx.fillText('Zona de perdida', xScale.left + 12, yScale.top + 28);
+      ctx.fillStyle = 'rgba(159,225,203,0.8)';
+      ctx.fillText('Zona de ganancia', xPx + 16, yScale.top + 28);
+
+      ctx.restore();
+    }
+  }]
+});
+</script>
+</body>
+</html>
